@@ -11,6 +11,10 @@ import ru.sanctio.utils.MessageUtils;
 
 import static ru.sanctio.model.RabbitQueue.*;
 
+/**
+ * Контроллер для распределения входящих сообщений по очередям RabbitMQ
+ */
+
 @Component
 @Log4j
 public class UpdateController {
@@ -55,16 +59,6 @@ public class UpdateController {
         }
     }
 
-    private void setUnsupportedMessageTypeView(Update update) {
-        SendMessage sendMessage = messageUtils.generateSendMessageWithText(update,
-                "Неподдерживаемый тип сообщения!");
-        setView(sendMessage);
-    }
-
-    private void setView(SendMessage sendMessage) {
-        telegramBot.sendAnswerMessage(sendMessage);
-    }
-
     private void processTextMessage(Update update) {
         updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
     }
@@ -83,5 +77,15 @@ public class UpdateController {
         SendMessage sendMessage = messageUtils.generateSendMessageWithText(update,
                 "Файл получен! Обрабатывается...");
         setView(sendMessage);
+    }
+
+    private void setUnsupportedMessageTypeView(Update update) {
+        SendMessage sendMessage = messageUtils.generateSendMessageWithText(update,
+                "Неподдерживаемый тип сообщения!");
+        setView(sendMessage);
+    }
+
+    private void setView(SendMessage sendMessage) {
+        telegramBot.sendAnswerMessage(sendMessage);
     }
 }

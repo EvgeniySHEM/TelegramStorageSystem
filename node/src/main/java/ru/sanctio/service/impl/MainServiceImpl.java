@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.sanctio.dao.AppUserDAO;
 import ru.sanctio.dao.RawDataDAO;
 import ru.sanctio.entity.AppDocument;
+import ru.sanctio.entity.AppPhoto;
 import ru.sanctio.entity.AppUser;
 import ru.sanctio.entity.RawData;
 import ru.sanctio.entity.enums.UserState;
@@ -48,7 +49,7 @@ public class MainServiceImpl implements MainService {
         String output = "";
 
         ServiceCommand serviceCommand = ServiceCommand.fromValue(text);
-        if(CANCEL.equals(serviceCommand)) {
+        if (CANCEL.equals(serviceCommand)) {
             output = cancelProcess(appUser);
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
@@ -68,7 +69,7 @@ public class MainServiceImpl implements MainService {
         saveRawData(update);
         AppUser appUser = findOrSaveAppUser(update);
         Long chatId = update.getMessage().getChatId();
-        if(isNotAllowToSendContent(chatId, appUser)) {
+        if (isNotAllowToSendContent(chatId, appUser)) {
             return;
         }
 
@@ -91,19 +92,26 @@ public class MainServiceImpl implements MainService {
         saveRawData(update);
         AppUser appUser = findOrSaveAppUser(update);
         Long chatId = update.getMessage().getChatId();
-        if(isNotAllowToSendContent(chatId, appUser)) {
+        if (isNotAllowToSendContent(chatId, appUser)) {
             return;
         }
 
-        //todo добавить сохранение фото
-        String answer = "Фото успешно загружено! Ссылка для скачивания: " +
-                "http://test.ru/get-photo/777";
-        sendAnswer(answer, chatId);
+        try {
+            AppPhoto photo = fileService.processPhoto(update.getMessage());
+            //todo добавить генерацию ссылки для скачивания фото
+            String answer = "Фото успешно загружено! Ссылка для скачивания: " +
+                    "http://test.ru/get-photo/777";
+            sendAnswer(answer, chatId);
+        } catch (UploadFileException ex) {
+            log.error(ex);
+            String error = "К сожалению, загрузка фото не удалась. Повторите попытку позже.";
+            sendAnswer(error, chatId);
+        }
     }
 
     private boolean isNotAllowToSendContent(Long chatId, AppUser appUser) {
         UserState userState = appUser.getState();
-        if(!appUser.getIsActive()) {
+        if (!appUser.getIsActive()) {
             String error = "Зарегистрируйтесь или активируйте свою учетную запись " +
                     "для загрузки контента";
             sendAnswer(error, chatId);
@@ -126,7 +134,7 @@ public class MainServiceImpl implements MainService {
 
     private String processServiceCommand(AppUser appUser, String cmd) {
         ServiceCommand serviceCommand = ServiceCommand.fromValue(cmd);
-        if(REGISTRATION.equals(serviceCommand)) {
+        if (REGISTRATION.equals(serviceCommand)) {
             //todo добавить регистрацию
             return "Временно недоступна";
         } else if (HELP.equals(serviceCommand)) {

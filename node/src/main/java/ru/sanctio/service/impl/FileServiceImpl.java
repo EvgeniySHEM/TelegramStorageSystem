@@ -16,6 +16,7 @@ import ru.sanctio.entity.BinaryContent;
 import ru.sanctio.exceptions.UploadFileException;
 import ru.sanctio.service.FileService;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,9 +48,7 @@ public class FileServiceImpl implements FileService {
         ResponseEntity<String> response = getFilePath(fileId);
         if(response.getStatusCode() == HttpStatus.OK) {
             JSONObject jsonObject = new JSONObject(response.getBody());
-            String filePath = String.valueOf(jsonObject
-                    .getJSONObject("result")
-                    .getString("file_path"));
+            String filePath = String.valueOf(jsonObject.getJSONObject("result").getString("file_path"));
             byte[] fileInByte = downloadFile(filePath);
             BinaryContent transientBinaryContent = BinaryContent.builder()
                     .fileAsArrayOfBytes(fileInByte)
@@ -68,19 +67,17 @@ public class FileServiceImpl implements FileService {
         HttpHeaders httpHeaders = new HttpHeaders();
         HttpEntity<String> request = new HttpEntity<>(httpHeaders);
 
-        return restTemplate.exchange(
-                fileInfoUri,
+        return restTemplate.exchange(fileInfoUri,
                 HttpMethod.GET,
                 request,
                 String.class,
                 token,
-                fileId
-        );
+                fileId);
     }
 
     private byte[] downloadFile(String filePath) {
         String fullUri = fileStorageUri.replace("{token}", token)
-                .replace("{filepath}", filePath);
+                .replace("{filePath}", filePath);
         URL urlObj = null;
         try{
             urlObj = new URL(fullUri);
@@ -91,7 +88,7 @@ public class FileServiceImpl implements FileService {
         //todo подумать над оптимизацией
         try(InputStream inputStream = urlObj.openStream()) {
             return inputStream.readAllBytes();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new UploadFileException(urlObj.toExternalForm(), e);
         }
     }

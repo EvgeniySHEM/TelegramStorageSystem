@@ -4,20 +4,23 @@ import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.sanctio.dao.AppUserDAO;
 import ru.sanctio.dao.RawDataDAO;
+import ru.sanctio.entity.AppDocument;
 import ru.sanctio.entity.AppUser;
 import ru.sanctio.entity.RawData;
 import ru.sanctio.entity.enums.UserState;
+import ru.sanctio.exceptions.UploadFileException;
+import ru.sanctio.service.FileService;
 import ru.sanctio.service.MainService;
 import ru.sanctio.service.ProducerService;
+import ru.sanctio.service.enums.ServiceCommand;
 
 import static ru.sanctio.entity.enums.UserState.BASIC_STATE;
 import static ru.sanctio.entity.enums.UserState.WAIT_FOR_MAIL_STATE;
-import static ru.sanctio.service.enums.ServiceCommands.*;
+import static ru.sanctio.service.enums.ServiceCommand.*;
 
 @Service
 @Log4j
@@ -26,12 +29,14 @@ public class MainServiceImpl implements MainService {
     private final RawDataDAO rawDataDAO;
     private final ProducerService producerService;
     private final AppUserDAO appUserDao;
+    private final FileService fileService;
 
     @Autowired
-    public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDao) {
+    public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDao, FileService fileService) {
         this.rawDataDAO = rawDataDAO;
         this.producerService = producerService;
         this.appUserDao = appUserDao;
+        this.fileService = fileService;
     }
 
     @Override
@@ -42,7 +47,8 @@ public class MainServiceImpl implements MainService {
         String text = update.getMessage().getText();
         String output = "";
 
-        if(CANCEL.equals(text)) {
+        ServiceCommand serviceCommand = ServiceCommand.fromValue(text);
+        if(CANCEL.equals(serviceCommand)) {
             output = cancelProcess(appUser);
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
@@ -66,10 +72,18 @@ public class MainServiceImpl implements MainService {
             return;
         }
 
-        //todo добавить сохранение документа
-        String answer = "Документ успешно загружен! Ссылка для скачивания: " +
-                "http://test.ru/get-doc/777";
-        sendAnswer(answer, chatId);
+        try {
+            AppDocument document = fileService.processDoc(update.getMessage());
+            //todo добавить генерацию ссылки ля скачивания документа
+
+            String answer = "Документ успешно загружено! Ссылка для скачивания: " +
+                    "http://test.ru/get-photo/777";
+            sendAnswer(answer, chatId);
+        } catch (UploadFileException ex) {
+            log.error(ex);
+            String error = "К сожалению, загрузка файла не удалась. Повторите попытку позже.";
+            sendAnswer(error, chatId);
+        }
     }
 
     @Override
@@ -111,12 +125,13 @@ public class MainServiceImpl implements MainService {
     }
 
     private String processServiceCommand(AppUser appUser, String cmd) {
-        if(REGISTRATION.equals(cmd)) {
+        ServiceCommand serviceCommand = ServiceCommand.fromValue(cmd);
+        if(REGISTRATION.equals(serviceCommand)) {
             //todo добавить регистрацию
             return "Временно недоступна";
-        } else if (HELP.equals(cmd)) {
+        } else if (HELP.equals(serviceCommand)) {
             return help();
-        } else if (START.equals(cmd)) {
+        } else if (START.equals(serviceCommand)) {
             return "Приветствую! Чтобы посмотреть список доступных команд введите /help";
         } else {
             return "Неизвестная команда! Чтобы посмотреть список доступных команд введите /help";

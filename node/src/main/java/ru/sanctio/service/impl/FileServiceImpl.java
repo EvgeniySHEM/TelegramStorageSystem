@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
+import ru.sanctio.CryptoTool;
 import ru.sanctio.dao.AppDocumentDao;
 import ru.sanctio.dao.AppPhotoDao;
 import ru.sanctio.dao.BinaryContentDAO;
@@ -18,6 +19,7 @@ import ru.sanctio.entity.AppPhoto;
 import ru.sanctio.entity.BinaryContent;
 import ru.sanctio.exceptions.UploadFileException;
 import ru.sanctio.service.FileService;
+import ru.sanctio.service.enums.LinkType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,15 +38,20 @@ public class FileServiceImpl implements FileService {
     @Value("${service.file_storage.uri}")
     private String fileStorageUri;
 
+    @Value("${link.address}")
+    private String linkAddress;
+
     private final AppDocumentDao appDocumentDao;
     private final AppPhotoDao appPhotoDao;
     private final BinaryContentDAO binaryContentDAO;
+    private final CryptoTool cryptoTool;
 
     @Autowired
-    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao, BinaryContentDAO binaryContentDAO) {
+    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao, BinaryContentDAO binaryContentDAO, CryptoTool cryptoTool) {
         this.appDocumentDao = appDocumentDao;
         this.appPhotoDao = appPhotoDao;
         this.binaryContentDAO = binaryContentDAO;
+        this.cryptoTool = cryptoTool;
     }
 
     @Override
@@ -64,7 +71,9 @@ public class FileServiceImpl implements FileService {
     @Override
     public AppPhoto processPhoto(Message telegramMessage) {
         //todo пока что обрабатываем одно фото
-        PhotoSize telegramPhoto = telegramMessage.getPhoto().get(0);
+        int photoSizeCount = telegramMessage.getPhoto().size();
+        int photoIndex = photoSizeCount > 1 ? telegramMessage.getPhoto().size() - 1 : 0;
+        PhotoSize telegramPhoto = telegramMessage.getPhoto().get(photoIndex);
         String fileId = telegramPhoto.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if(response.getStatusCode() == HttpStatus.OK) {
@@ -139,5 +148,11 @@ public class FileServiceImpl implements FileService {
                 .binaryContent(persistentBinaryContent)
                 .fileSize(telegramPhoto.getFileSize())
                 .build();
+    }
+
+    @Override
+    public String generateLink(Long docId, LinkType linkType) {
+        String hash = cryptoTool.hashOf(docId);
+        return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
     }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
+import ru.sanctio.CryptoTool;
 import ru.sanctio.dao.AppDocumentDao;
 import ru.sanctio.dao.AppPhotoDao;
 import ru.sanctio.entity.AppDocument;
@@ -21,26 +22,33 @@ public class FileServiceImpl implements FileService {
 
     private final AppDocumentDao appDocumentDao;
     private final AppPhotoDao appPhotoDao;
+    private final CryptoTool cryptoTool;
 
     @Autowired
-    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao) {
+    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao, CryptoTool cryptoTool) {
         this.appDocumentDao = appDocumentDao;
         this.appPhotoDao = appPhotoDao;
+        this.cryptoTool = cryptoTool;
     }
 
     
 
     @Override
-    public AppDocument getDocument(String docId) {
-        //todo добавить дешифрование хэш-строки
-        var id = Long.parseLong(docId);
+    public AppDocument getDocument(String hash) {
+
+        var id = cryptoTool.idOf(hash);
+        if(id == null) {
+            return null;
+        }
         return appDocumentDao.findById(id).orElse(null);
     }
 
     @Override
-    public AppPhoto getPhoto(String photoId) {
-        //todo добавить дешифрование хэш-строки
-        var id = Long.parseLong(photoId);
+    public AppPhoto getPhoto(String hash) {
+        var id = cryptoTool.idOf(hash);
+        if(id == null) {
+            return null;
+        }
         return appPhotoDao.findById(id).orElse(null);
     }
 

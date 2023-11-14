@@ -17,6 +17,7 @@ import ru.sanctio.exceptions.UploadFileException;
 import ru.sanctio.service.FileService;
 import ru.sanctio.service.MainService;
 import ru.sanctio.service.ProducerService;
+import ru.sanctio.service.enums.LinkType;
 import ru.sanctio.service.enums.ServiceCommand;
 
 import static ru.sanctio.entity.enums.UserState.BASIC_STATE;
@@ -75,10 +76,10 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppDocument document = fileService.processDoc(update.getMessage());
-            //todo добавить генерацию ссылки ля скачивания документа
+            String link = fileService.generateLink(document.getId(), LinkType.GET_DOC);
 
             String answer = "Документ успешно загружено! Ссылка для скачивания: " +
-                    "http://test.ru/get-photo/777";
+                    link;
             sendAnswer(answer, chatId);
         } catch (UploadFileException ex) {
             log.error(ex);
@@ -98,9 +99,10 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppPhoto photo = fileService.processPhoto(update.getMessage());
-            //todo добавить генерацию ссылки для скачивания фото
+            String link = fileService.generateLink(photo.getId(), LinkType.GET_PHOTO);
+
             String answer = "Фото успешно загружено! Ссылка для скачивания: " +
-                    "http://test.ru/get-photo/777";
+                    link;
             sendAnswer(answer, chatId);
         } catch (UploadFileException ex) {
             log.error(ex);

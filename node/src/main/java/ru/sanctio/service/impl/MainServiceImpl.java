@@ -14,11 +14,14 @@ import ru.sanctio.entity.AppUser;
 import ru.sanctio.entity.RawData;
 import ru.sanctio.entity.enums.UserState;
 import ru.sanctio.exceptions.UploadFileException;
+import ru.sanctio.service.AppUserService;
 import ru.sanctio.service.FileService;
 import ru.sanctio.service.MainService;
 import ru.sanctio.service.ProducerService;
 import ru.sanctio.service.enums.LinkType;
 import ru.sanctio.service.enums.ServiceCommand;
+
+import java.util.Optional;
 
 import static ru.sanctio.entity.enums.UserState.BASIC_STATE;
 import static ru.sanctio.entity.enums.UserState.WAIT_FOR_MAIL_STATE;
@@ -32,13 +35,15 @@ public class MainServiceImpl implements MainService {
     private final ProducerService producerService;
     private final AppUserDAO appUserDao;
     private final FileService fileService;
+    private final AppUserService appUserService;
 
     @Autowired
-    public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDao, FileService fileService) {
+    public MainServiceImpl(RawDataDAO rawDataDAO, ProducerService producerService, AppUserDAO appUserDao, FileService fileService, AppUserService appUserService) {
         this.rawDataDAO = rawDataDAO;
         this.producerService = producerService;
         this.appUserDao = appUserDao;
         this.fileService = fileService;
+        this.appUserService = appUserService;
     }
 
     @Override
@@ -55,7 +60,7 @@ public class MainServiceImpl implements MainService {
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
         } else if (WAIT_FOR_MAIL_STATE.equals(userState)) {
-            //todo добавить обработку email
+            output = appUserService.setEmail(appUser, text);
         } else {
             log.error("Unknown user state" + userState);
             output = "Неизвестная ошибка! Введите /cancel и попробуйте снова";
@@ -137,8 +142,7 @@ public class MainServiceImpl implements MainService {
     private String processServiceCommand(AppUser appUser, String cmd) {
         ServiceCommand serviceCommand = ServiceCommand.fromValue(cmd);
         if (REGISTRATION.equals(serviceCommand)) {
-            //todo добавить регистрацию
-            return "Временно недоступна";
+            return appUserService.registerUser(appUser);
         } else if (HELP.equals(serviceCommand)) {
             return help();
         } else if (START.equals(serviceCommand)) {
@@ -162,20 +166,19 @@ public class MainServiceImpl implements MainService {
 
     private AppUser findOrSaveAppUser(Update update) {
         User telegramUser = update.getMessage().getFrom();
-        AppUser persistentAppUser = appUserDao.findAppUserByTelegramUserId(telegramUser.getId());
-        if (persistentAppUser == null) {
+        Optional<AppUser> persistentAppUser = appUserDao.findByTelegramUserId(telegramUser.getId());
+        if (persistentAppUser.isEmpty()) {
             AppUser transientAppUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())
                     .userName(telegramUser.getUserName())
                     .firstName(telegramUser.getFirstName())
                     .lastName(telegramUser.getLastName())
-                    //todo изменить значение по умолчанию после регистрации
-                    .isActive(true)
+                    .isActive(false)
                     .state(BASIC_STATE)
                     .build();
             return appUserDao.save(transientAppUser);
         }
-        return persistentAppUser;
+        return persistentAppUser.get();
     }
 
     private void saveRawData(Update update) {

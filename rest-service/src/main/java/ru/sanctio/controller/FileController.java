@@ -32,7 +32,7 @@ public class FileController {
     public void getDoc(@RequestParam String id, HttpServletResponse response) {
         //TODO для формирования badRequest добавить ControllerAdvice
         AppDocument document = fileService.getDocument(id);
-        if(document == null) {
+        if (document == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -63,7 +63,7 @@ public class FileController {
     }
 
     private static void writeContent(HttpServletResponse response, BinaryContent binaryContent) {
-        try(ServletOutputStream outputStream = response.getOutputStream()) {
+        try (ServletOutputStream outputStream = response.getOutputStream()) {
             outputStream.write(binaryContent.getFileAsArrayOfBytes());
         } catch (IOException e) {
             log.error(e);

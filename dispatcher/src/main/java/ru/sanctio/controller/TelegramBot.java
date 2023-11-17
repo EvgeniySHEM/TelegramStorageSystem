@@ -27,11 +27,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Value("${bot.token}")
     private String botToken;
 
-    private UpdateController updateController;
+    private UpdateProcessor updateProcessor;
 
     @Autowired
-    public void setUpdateController(UpdateController updateController) {
-        this.updateController = updateController;
+    public void setUpdateController(UpdateProcessor updateProcessor) {
+        this.updateProcessor = updateProcessor;
     }
 
     @PostConstruct
@@ -62,7 +62,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        updateController.processUpdate(update);
+        updateProcessor.processUpdate(update);
     }
 
     public void sendAnswerMessage(SendMessage message) {

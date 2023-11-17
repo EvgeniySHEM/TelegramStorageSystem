@@ -1,20 +1,14 @@
 package ru.sanctio.service.impl;
 
 import lombok.extern.log4j.Log4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import ru.sanctio.CryptoTool;
 import ru.sanctio.dao.AppDocumentDao;
 import ru.sanctio.dao.AppPhotoDao;
 import ru.sanctio.entity.AppDocument;
 import ru.sanctio.entity.AppPhoto;
-import ru.sanctio.entity.BinaryContent;
 import ru.sanctio.service.FileService;
-
-import java.io.File;
-import java.io.IOException;
 
 @Log4j
 @Service
@@ -31,12 +25,10 @@ public class FileServiceImpl implements FileService {
         this.cryptoTool = cryptoTool;
     }
 
-    
-
     @Override
     public AppDocument getDocument(String hash) {
         var id = cryptoTool.idOf(hash);
-        if(id == null) {
+        if (id == null) {
             return null;
         }
         return appDocumentDao.findById(id).orElse(null);
@@ -45,7 +37,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public AppPhoto getPhoto(String hash) {
         var id = cryptoTool.idOf(hash);
-        if(id == null) {
+        if (id == null) {
             return null;
         }
         return appPhotoDao.findById(id).orElse(null);

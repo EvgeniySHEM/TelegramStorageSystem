@@ -1,5 +1,6 @@
 package ru.sanctio.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +13,10 @@ import static ru.sanctio.model.RabbitQueue.*;
 
 @Service
 @Log4j
+@RequiredArgsConstructor
 public class ConsumerServiceImpl implements ConsumerService {
 
     private final MainService mainService;
-
-    @Autowired
-    public ConsumerServiceImpl(MainService mainService) {
-        this.mainService = mainService;
-    }
 
     @Override
     @RabbitListener(queues = TEXT_MESSAGE_UPDATE)

@@ -1,8 +1,8 @@
 package ru.sanctio.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -26,9 +26,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-@Service
+
 @Log4j
+@RequiredArgsConstructor
+@Service
 public class FileServiceImpl implements FileService {
+
     @Value("${token}")
     private String token;
 
@@ -42,26 +45,24 @@ public class FileServiceImpl implements FileService {
     private String linkAddress;
 
     private final AppDocumentDao appDocumentDao;
-    private final AppPhotoDao appPhotoDao;
-    private final BinaryContentDAO binaryContentDAO;
-    private final CryptoTool cryptoTool;
 
-    @Autowired
-    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao, BinaryContentDAO binaryContentDAO, CryptoTool cryptoTool) {
-        this.appDocumentDao = appDocumentDao;
-        this.appPhotoDao = appPhotoDao;
-        this.binaryContentDAO = binaryContentDAO;
-        this.cryptoTool = cryptoTool;
-    }
+    private final AppPhotoDao appPhotoDao;
+
+    private final BinaryContentDAO binaryContentDAO;
+
+    private final CryptoTool cryptoTool;
 
     @Override
     public AppDocument processDoc(Message telegramMessage) {
         Document telegramDoc = telegramMessage.getDocument();
         String fileId = telegramDoc.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
-        if(response.getStatusCode() == HttpStatus.OK) {
+
+        if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persistentBinaryContent = getPersistentBinaryContent(response);
+
             AppDocument transientAppDoc = buildTransientAppDoc(telegramDoc, persistentBinaryContent);
+
             return appDocumentDao.save(transientAppDoc);
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
@@ -75,10 +76,14 @@ public class FileServiceImpl implements FileService {
         int photoIndex = photoSizeCount > 1 ? telegramMessage.getPhoto().size() - 1 : 0;
         PhotoSize telegramPhoto = telegramMessage.getPhoto().get(photoIndex);
         String fileId = telegramPhoto.getFileId();
+
         ResponseEntity<String> response = getFilePath(fileId);
-        if(response.getStatusCode() == HttpStatus.OK) {
+
+        if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persistentBinaryContent = getPersistentBinaryContent(response);
+
             AppPhoto transientAppPhoto = buildTransientAppPhoto(telegramPhoto, persistentBinaryContent);
+
             return appPhotoDao.save(transientAppPhoto);
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
@@ -88,14 +93,17 @@ public class FileServiceImpl implements FileService {
     private BinaryContent getPersistentBinaryContent(ResponseEntity<String> response) {
         String filePath = getFilePath(response);
         byte[] fileInByte = downloadFile(filePath);
+
         BinaryContent transientBinaryContent = BinaryContent.builder()
                 .fileAsArrayOfBytes(fileInByte)
                 .build();
+
         return binaryContentDAO.save(transientBinaryContent);
     }
 
     private static String getFilePath(ResponseEntity<String> response) {
         JSONObject jsonObject = new JSONObject(response.getBody());
+
         return String.valueOf(jsonObject
                 .getJSONObject("result")
                 .getString("file_path"));
@@ -117,15 +125,16 @@ public class FileServiceImpl implements FileService {
     private byte[] downloadFile(String filePath) {
         String fullUri = fileStorageUri.replace("{token}", token)
                 .replace("{filePath}", filePath);
+
         URL urlObj = null;
-        try{
+        try {
             urlObj = new URL(fullUri);
         } catch (MalformedURLException e) {
             throw new UploadFileException(e);
         }
 
         //todo подумать над оптимизацией
-        try(InputStream inputStream = urlObj.openStream()) {
+        try (InputStream inputStream = urlObj.openStream()) {
             return inputStream.readAllBytes();
         } catch (IOException e) {
             throw new UploadFileException(urlObj.toExternalForm(), e);
@@ -153,6 +162,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public String generateLink(Long docId, LinkType linkType) {
         String hash = cryptoTool.hashOf(docId);
+
         return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
     }
 }

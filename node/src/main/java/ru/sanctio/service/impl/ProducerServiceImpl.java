@@ -1,25 +1,24 @@
 package ru.sanctio.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import ru.sanctio.service.ProducerService;
 
-import static ru.sanctio.model.RabbitQueue.ANSWER_MESSAGE;
-
+@RequiredArgsConstructor
 @Service
 public class ProducerServiceImpl implements ProducerService {
 
-    private final RabbitTemplate rabbitTemplate;
+    @Value("${spring.rabbitmq.queues.answer-message}")
+    private String answerMessageQueue;
 
-    @Autowired
-    public ProducerServiceImpl(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public void producerAnswer(SendMessage sendMessage) {
-        rabbitTemplate.convertAndSend(ANSWER_MESSAGE, sendMessage);
+
+        rabbitTemplate.convertAndSend(answerMessageQueue, sendMessage);
     }
 }

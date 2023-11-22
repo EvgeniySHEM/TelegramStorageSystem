@@ -1,6 +1,7 @@
 package ru.sanctio.service.enums;
 
 public enum ServiceCommand {
+
     HELP("/help"),
     REGISTRATION("/registration"),
     CANCEL("/cancel"),
@@ -13,11 +14,13 @@ public enum ServiceCommand {
     }
 
     public static ServiceCommand fromValue(String text) {
+
         for (ServiceCommand command: ServiceCommand.values()) {
             if(command.value.equals(text)) {
                 return command;
             }
         }
+
         return null;
     }
 

@@ -1,5 +1,6 @@
 package ru.sanctio.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.sanctio.CryptoTool;
@@ -9,17 +10,12 @@ import ru.sanctio.service.UserActivationService;
 
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class UserActivationServiceImpl implements UserActivationService {
 
     private final AppUserDAO appUserDAO;
     private final CryptoTool cryptoTool;
-
-    @Autowired
-    public UserActivationServiceImpl(AppUserDAO appUserDAO, CryptoTool cryptoTool) {
-        this.appUserDAO = appUserDAO;
-        this.cryptoTool = cryptoTool;
-    }
 
     @Override
     public boolean activation(String cryptoUserId) {

@@ -1,12 +1,10 @@
 package ru.sanctio.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.sanctio.entity.AppDocument;
 import ru.sanctio.entity.AppPhoto;
 import ru.sanctio.entity.BinaryContent;
@@ -17,18 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Log4j
+@RequiredArgsConstructor
 @RequestMapping("/file")
 @RestController
 public class FileController {
 
     private final FileService fileService;
 
-    @Autowired
-    public FileController(FileService fileService) {
-        this.fileService = fileService;
-    }
-
-    @RequestMapping(method = RequestMethod.GET, value = "/get-doc")
+    @GetMapping( "/get-doc")
     public void getDoc(@RequestParam String id, HttpServletResponse response) {
         //TODO для формирования badRequest добавить ControllerAdvice
         AppDocument document = fileService.getDocument(id);
@@ -45,7 +39,7 @@ public class FileController {
         writeContent(response, binaryContent);
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/get-photo")
+    @GetMapping("/get-photo")
     public void getPhoto(@RequestParam("id") String id, HttpServletResponse response) {
         //TODO для формирования badRequest добавить ControllerAdvice
         AppPhoto photo = fileService.getPhoto(id);

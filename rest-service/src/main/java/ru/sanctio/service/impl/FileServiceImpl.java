@@ -1,5 +1,6 @@
 package ru.sanctio.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,19 +12,13 @@ import ru.sanctio.entity.AppPhoto;
 import ru.sanctio.service.FileService;
 
 @Log4j
+@RequiredArgsConstructor
 @Service
 public class FileServiceImpl implements FileService {
 
     private final AppDocumentDao appDocumentDao;
     private final AppPhotoDao appPhotoDao;
     private final CryptoTool cryptoTool;
-
-    @Autowired
-    public FileServiceImpl(AppDocumentDao appDocumentDao, AppPhotoDao appPhotoDao, CryptoTool cryptoTool) {
-        this.appDocumentDao = appDocumentDao;
-        this.appPhotoDao = appPhotoDao;
-        this.cryptoTool = cryptoTool;
-    }
 
     @Override
     public AppDocument getDocument(String hash) {

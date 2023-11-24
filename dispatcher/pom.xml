@@ -13,10 +13,6 @@
     <name>dispatcher</name>
     <url>http://maven.apache.org</url>
 
-    <properties>
-
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -30,14 +26,18 @@
         </dependency>
 
         <dependency>
-            <groupId>ru.sanctio</groupId>
-            <artifactId>common-rabbitmq</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

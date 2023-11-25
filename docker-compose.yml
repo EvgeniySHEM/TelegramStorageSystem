@@ -1,0 +1,58 @@
+version: '3.5'
+
+services:
+  postgres:
+    image: postgres:14.5
+    container_name: postgres
+    environment:
+      - 'POSTGRES_USER=userok'
+      - 'POSTGRES_PASSWORD=p@ssw0rd'
+      - 'POSTGRES_DB=pogreb'
+    volumes:
+      - 'postgresql:/var/lib/postgresql/data'
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3.11.0-management
+    container_name: rabbitmq
+    environment:
+      - 'RABBITMQ_DEFAULT_USER=userok'
+      - 'RABBITMQ_DEFAULT_PASS=p@ssw0rd'
+    volumes:
+      - 'rabbitmq_data:/var/lib/rabbitmq'
+    restart: unless-stopped
+  dispatcher:
+    build: ./dispatcher
+    container_name: dispatcher
+    ports:
+      - '8084:8084'
+    depends_on:
+      - postgres
+      - rabbitmq
+  mail-service:
+    build: ./mail-service
+    container_name: mail-service
+    ports:
+      - '8087:8087'
+    depends_on:
+      - postgres
+      - rabbitmq
+  node:
+    build: ./node
+    container_name: node
+    ports:
+      - '8085:8085'
+    depends_on:
+      - postgres
+      - rabbitmq
+  rest-service:
+    build: ./rest-service
+    container_name: rest-service
+    ports:
+      - '8086'
+    depends_on:
+      - postgres
+      - rabbitmq
+volumes:
+  postgresql:
+  rabbitmq_data:
+
